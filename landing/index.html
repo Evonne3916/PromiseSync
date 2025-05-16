@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/html">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solance - Visualize Your Solana Portfolio</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #9945FF 0%, #14F195 100%);
+        }
+
+        .solana-shadow {
+            box-shadow: 0 4px 14px 0 rgba(153, 69, 255, 0.2);
+        }
+    </style>
+</head>
+
+<body class="bg-gray-900 text-white font-sans">
+    <!-- Header -->
+    <header class="container mx-auto px-4 py-6">
+        <div class="flex justify-between items-center">
+            <div class="flex items-center">
+                <div class="text-3xl  p-5 font-bold gradient-bg  bg-clip-text">Solance</div>
+            </div>
+            <nav class="hidden md:flex space-x-8">
+                <a href="#features" class="hover:text-purple-400 transition-colors">Features</a>
+                <a href="#how-it-works" class="hover:text-purple-400 transition-colors">How It Works</a>
+                <a href="#about" class="hover:text-purple-400 transition-colors">About</a>
+                <a href="#waitlist" class="hover:text-purple-400 transition-colors">Join Waitlist</a>
+            </nav>
+            <button class="md:hidden focus:outline-none">
+                <i class="fas fa-bars text-2xl"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="py-20 px-4">
+        <div class="container mx-auto text-center">
+            <h1 class="text-5xl md:text-6xl font-bold mb-6">Your Solana Portfolio, <span
+                    class="gradient-bg bg-clip-text">Simplified</span></h1>
+            <p class="text-xl md:text-2xl text-gray-300 mb-10 max-w-3xl mx-auto">Visualize all your SPL tokens, NFTs,
+                and staking rewards in one simple dashboard. No registration required.</p>
+            <form action="https://my.solance-app.com/" method="get">
+                <div class="flex flex-col md:flex-row justify-center gap-6 mb-12">
+
+                    <div class="relative">
+
+                        <input required type="text" name="address" placeholder="Enter your Solana wallet address"
+                               class="w-full md:w-96 px-6 py-4 rounded-lg bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500 text-white">
+
+                    </div>
+                    <button type="submit"
+                            class="gradient-bg text-white font-bold px-8 py-4 rounded-lg hover:opacity-90 transition-opacity">
+                        Visualize Portfolio
+                    </button>
+
+                </div>
+            </form>
+            <div class="text-gray-400 mb-12">
+                Example: <a target="_blank" href="https://my.solance-app.com/?address=9az5xpAV8KJ2Q2Jb1ZvBpvfUa5Cj4dZirbgvfPF5XsB8" class="text-purple-400">5XE7...8uFD</a> • <a target="_blank" href="https://my.solance-app.com/?address=9az5xpAV8KJ2Q2Jb1ZvBpvfUa5Cj4dZirbgvfPF5XsB8" class="text-purple-400">Try
+                    Demo</a>
+            </div>
+
+            <div class="max-w-5xl mx-auto rounded-2xl overflow-hidden solana-shadow">
+                <img src="/screen.jpg" alt="Solance Dashboard Preview" class="w-full">
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="py-20 px-4 bg-gray-800">
+        <div class="container mx-auto">
+            <h2 class="text-4xl font-bold text-center mb-16">Simple Features for Solana Users</h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
+                <div class="bg-gray-900 p-8 rounded-xl solana-shadow">
+                    <div class="text-purple-400 text-4xl mb-4">
+                        <i class="fas fa-wallet"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">Track SPL Tokens</h3>
+                    <p class="text-gray-300">See all your SPL tokens in one place with real-time prices and your total
+                        portfolio value in USD.</p>
+                </div>
+
+                <div class="bg-gray-900 p-8 rounded-xl solana-shadow">
+                    <div class="text-purple-400 text-4xl mb-4">
+                        <i class="fas fa-images"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">View Your NFTs</h3>
+                    <p class="text-gray-300">Display all your Solana NFTs with metadata from Metaplex in an
+                        easy-to-browse gallery.</p>
+                </div>
+
+                <div class="bg-gray-900 p-8 rounded-xl solana-shadow">
+                    <div class="text-purple-400 text-4xl mb-4">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">Portfolio Analytics</h3>
+                    <p class="text-gray-300">Track how your portfolio value changes over time with simple, intuitive
+                        charts.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section id="how-it-works" class="py-20 px-4">
+        <div class="container mx-auto">
+            <h2 class="text-4xl font-bold text-center mb-16">How It Works</h2>
+
+            <div class="flex flex-col md:flex-row items-center justify-between gap-16">
+                <div class="md:w-1/2">
+                    <div class="space-y-12">
+                        <div class="flex items-start">
+                            <div
+                                class="bg-purple-500 text-white rounded-full w-10 h-10 flex items-center justify-center mr-4 shrink-0">
+                                1</div>
+                            <div>
+                                <h3 class="text-2xl font-bold mb-2">Enter Your Wallet Address</h3>
+                                <p class="text-gray-300">Simply paste your Solana wallet address. No registration or
+                                    connecting required.</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start">
+                            <div
+                                class="bg-purple-500 text-white rounded-full w-10 h-10 flex items-center justify-center mr-4 shrink-0">
+                                2</div>
+                            <div>
+                                <h3 class="text-2xl font-bold mb-2">We Fetch Your Data</h3>
+                                <p class="text-gray-300">We securely fetch your tokens, NFTs, and staking information
+                                    from the Solana blockchain.</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start">
+                            <div
+                                class="bg-purple-500 text-white rounded-full w-10 h-10 flex items-center justify-center mr-4 shrink-0">
+                                3</div>
+                            <div>
+                                <h3 class="text-2xl font-bold mb-2">View Your Portfolio</h3>
+                                <p class="text-gray-300">See everything in one clean dashboard with charts, balances,
+                                    and analytics.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="md:w-1/2">
+                    <div class="bg-gray-800 p-6 rounded-2xl solana-shadow">
+                        <img src="/screen.jpg" alt="Solance Dashboard Demo" class="w-full rounded-lg">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About -->
+    <section id="about" class="py-20 px-4 bg-gray-800">
+        <div class="container mx-auto">
+            <div class="flex flex-col md:flex-row items-center gap-16">
+                <div class="md:w-1/2">
+                    <h2 class="text-4xl font-bold mb-6">Why We Built Solance</h2>
+                    <p class="text-xl text-gray-300 mb-6">Solana users deserve a simple way to visualize their assets
+                        without needing technical skills.</p>
+                    <p class="text-gray-300 mb-8">
+                        We're a team of student developers who believe in the Solana ecosystem but found existing
+                        portfolio trackers too complex. Our goal is to create the simplest possible experience - like
+                        "Google Analytics for your Solana wallet."
+                    </p>
+                    <div class="flex flex-wrap gap-4">
+                        <div class="bg-gray-700 px-4 py-2 rounded-full text-sm">Solana Focused</div>
+                        <div class="bg-gray-700 px-4 py-2 rounded-full text-sm">Mobile Friendly</div>
+                        <div class="bg-gray-700 px-4 py-2 rounded-full text-sm">No Registration</div>
+                        <div class="bg-gray-700 px-4 py-2 rounded-full text-sm">Open Source</div>
+                    </div>
+                </div>
+
+                <div class="md:w-1/2">
+                    <div class="grid grid-cols-2 gap-6">
+                        <div class="bg-gray-900 p-6 rounded-xl solana-shadow">
+                            <div class="text-purple-400 text-3xl mb-3">
+                                <i class="fas fa-code"></i>
+                            </div>
+                            <h3 class="text-xl font-bold mb-2">Open Source</h3>
+                            <p class="text-sm text-gray-300">MIT License on GitHub</p>
+                        </div>
+
+                        <div class="bg-gray-900 p-6 rounded-xl solana-shadow">
+                            <div class="text-purple-400 text-3xl mb-3">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                            <h3 class="text-xl font-bold mb-2">Secure</h3>
+                            <p class="text-sm text-gray-300">No login, no data storage</p>
+                        </div>
+
+                        <div class="bg-gray-900 p-6 rounded-xl solana-shadow">
+                            <div class="text-purple-400 text-3xl mb-3">
+                                <i class="fas fa-mobile-alt"></i>
+                            </div>
+                            <h3 class="text-xl font-bold mb-2">Mobile First</h3>
+                            <p class="text-sm text-gray-300">Works on all devices</p>
+                        </div>
+
+                        <div class="bg-gray-900 p-6 rounded-xl solana-shadow">
+                            <div class="text-purple-400 text-3xl mb-3">
+                                <i class="fas fa-bolt"></i>
+                            </div>
+                            <h3 class="text-xl font-bold mb-2">Fast</h3>
+                            <p class="text-sm text-gray-300">Real-time blockchain data</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Waitlist Section -->
+    <section id="waitlist" class="py-20 px-4">
+        <div class="container mx-auto text-center">
+            <h2 class="text-4xl font-bold mb-6">Join Our Waitlist</h2>
+            <p class="text-xl text-gray-300 mb-10 max-w-2xl mx-auto">Be among the first to try Solance when we launch.
+                Early users will receive exclusive NFT badges.</p>
+
+            <div class="max-w-md mx-auto">
+                <div id="waitlist-message" class="text-center text-sm mb-2 text-gray-300"></div>
+                <form id="waitlist-form">
+                    <div class="flex flex-col md:flex-row gap-4 mb-4">
+                        <input id="waitlist-email" type="email" placeholder="Your email address"
+                            class="w-full px-6 py-4 rounded-lg bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500 text-white">
+                        <button type="submit"
+                            class="gradient-bg text-white font-bold px-8 py-4 rounded-lg hover:opacity-90 transition-opacity whitespace-nowrap">
+                            Join Waitlist
+                        </button>
+                    </div>
+                </form>
+                <p class="text-gray-400 text-sm">We'll never share your email. Unsubscribe anytime.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="py-20 px-4 bg-gray-800">
+        <div class="container mx-auto">
+            <h2 class="text-4xl font-bold text-center mb-16">Frequently Asked Questions</h2>
+
+            <div class="max-w-3xl mx-auto space-y-6">
+                <div class="bg-gray-900 p-6 rounded-xl">
+                    <h3 class="text-xl font-bold mb-3">Is Solance free to use?</h3>
+                    <p class="text-gray-300">Yes, the basic features will always be free. We plan to introduce premium
+                        features in the future for advanced users.</p>
+                </div>
+
+                <div class="bg-gray-900 p-6 rounded-xl">
+                    <h3 class="text-xl font-bold mb-3">Do I need to connect my wallet?</h3>
+                    <p class="text-gray-300">No. Simply enter your wallet address and we'll fetch the public data from
+                        the blockchain. We never ask for or store your private keys.</p>
+                </div>
+
+                <div class="bg-gray-900 p-6 rounded-xl">
+                    <h3 class="text-xl font-bold mb-3">Which Solana assets can I track?</h3>
+                    <p class="text-gray-300">All SPL tokens, NFTs from Metaplex, and staking rewards from protocols like
+                        Marinade and Socean.</p>
+                </div>
+
+                <div class="bg-gray-900 p-6 rounded-xl">
+                    <h3 class="text-xl font-bold mb-3">Will you support other blockchains?</h3>
+                    <p class="text-gray-300">We're starting with Solana, but plan to expand to other chains like BSC,
+                        Base, and Ethereum in the future.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-12 px-4">
+        <div class="container mx-auto">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-6 md:mb-0">
+                    <div class="text-2xl font-bold gradient-bg  bg-clip-text mb-2 text-center">Solance</div>
+                    <p class="text-gray-400">Visualize your Solana portfolio with ease.</p>
+                </div>
+
+                <div class="flex flex-wrap gap-8 mb-6 md:mb-0">
+                    <a href="#features" class="text-gray-300 hover:text-purple-400 transition-colors">Features</a>
+                    <a href="#how-it-works" class="text-gray-300 hover:text-purple-400 transition-colors">How It
+                        Works</a>
+                    <a href="#about" class="text-gray-300 hover:text-purple-400 transition-colors">About</a>
+                    <a href="#waitlist" class="text-gray-300 hover:text-purple-400 transition-colors">Join Waitlist</a>
+                </div>
+
+                <div class="flex gap-4">
+                    <a href="https://x.com/appSolance" target="_blank"
+                        class="text-gray-400 hover:text-purple-400 transition-colors">
+                        <i class="fab fa-twitter text-xl"></i>
+                    </a>
+
+                    <a href="https://github.com/Evonne3916/PromiseSync" target="_blank"
+                        class="text-gray-400 hover:text-purple-400 transition-colors">
+                        <i class="fab fa-github text-xl"></i>
+                    </a>
+                </div>
+            </div>
+
+            <div class="border-t border-gray-800 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
+                <p class="text-gray-500">© 2025 Solance. All rights reserved.</p>
+                <div class="flex gap-6 mt-4 md:mt-0">
+                    <a href="#" class="text-gray-500 hover:text-gray-300 transition-colors text-sm">Privacy Policy</a>
+                    <a href="#" class="text-gray-500 hover:text-gray-300 transition-colors text-sm">Terms of Use</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+    // Simple script for mobile menu toggle
+    document.addEventListener('DOMContentLoaded', function () {
+        const menuButton = document.querySelector('button');
+        const nav = document.querySelector('nav');
+
+        menuButton.addEventListener('click', function () {
+            nav.classList.toggle('hidden');
+            nav.classList.toggle('flex');
+            nav.classList.toggle('flex-col');
+            nav.classList.toggle('absolute');
+            nav.classList.toggle('top-20');
+            nav.classList.toggle('right-4');
+            nav.classList.toggle('bg-gray-900');
+            nav.classList.toggle('p-4');
+            nav.classList.toggle('rounded-lg');
+            nav.classList.toggle('shadow-lg');
+        });
+        const form = document.getElementById('waitlist-form');
+        const emailInput = document.getElementById('waitlist-email');
+        const messageDiv = document.getElementById('waitlist-message');
+
+        if (form) {
+            form.addEventListener('submit', async function (e) {
+                e.preventDefault();
+                const email = emailInput.value;
+                const url = `https://api.solance-app.com/SaveEmail?email=${encodeURIComponent(email)}`;
+                messageDiv.textContent = 'Submitting...';
+                messageDiv.classList.remove('text-green-500', 'text-red-500');
+                try {
+                    const response = await fetch(url, { method: 'POST' });
+                    const data = await response.json();
+                    if (response.ok) {
+                        form.reset();
+                        messageDiv.textContent = 'Thank you for joining the waitlist!';
+                        messageDiv.classList.remove('text-red-500');
+                        messageDiv.classList.add('text-green-500');
+                    } else {
+                        messageDiv.textContent = 'An error occurred. Please try again later.';
+                        messageDiv.classList.remove('text-green-500');
+                        messageDiv.classList.add('text-red-500');
+                        console.error(data.error);
+                    }
+                } catch {
+                    messageDiv.textContent = 'An error occurred. Please try again later.';
+                    messageDiv.classList.remove('text-green-500');
+                    messageDiv.classList.add('text-red-500');
+                }
+            });
+        }
+    });
+</script>
+</body>
+
+</html>
