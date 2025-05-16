@@ -13,15 +13,29 @@ const version = 'mainnet-beta'
 
 
 app.use(express.json());
-app.use(cors({
-    origin: '*'
-}));
-
 
 const connection = new solanaWeb3.Connection(
     solanaWeb3.clusterApiUrl(version),
     'confirmed'
 );
+
+const allowedOrigins = [
+    'https://solance-app.com',
+    'https://my.solance-app.com',
+    'http://localhost:3000',
+    'https://api.solance-app.com'
+];
+
+app.use(cors({
+    origin: function (origin, callback) {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    credentials: true // если надо
+}));
 
 
 const metaplex = Metaplex.make(connection);
@@ -346,16 +360,34 @@ app.get('/tokens', async (req, res) => {
                 const priceChange1h = priceData.usd_24h_change ?? null;
                 const image = token.image || null;
 
+                let totalValueUSD = null;
+                if (price !== null) {
+                    const value = Number(token.amount) * Number(price);
+                    totalValueUSD = value < 0.001 && value > 0 ? "~0" : Number(value.toFixed(3));
+                }
+
                 return {
                     ...token,
                     priceUSD: price,
                     priceChange1h: priceChange1h !== null ? Number(priceChange1h.toFixed(2)) : null,
-                    totalValueUSD: price !== null ? Number((token.amount * price).toFixed(2)) : null,
+                    totalValueUSD: totalValueUSD,
                     image: image || null,
                 };
-            }).filter(token => token.priceUSD !== null);
-        });
+            })
+                .filter(token => token.priceUSD !== null)
+                .sort((a, b) => {
+                    const aValue = a.totalValueUSD === "~0" ? 0 : Number(a.totalValueUSD);
+                    const bValue = b.totalValueUSD === "~0" ? 0 : Number(b.totalValueUSD);
 
+                    if (Math.abs(bValue - aValue) < 0.000001) {
+                        return b.amount - a.amount;
+                    }
+                    return bValue - aValue;
+                })
+                .map(token => {
+                    return token;
+                });
+        });
         res.json(tokens);
     } catch (error) {
         console.error('Помилка при отриманні токенів:', error);
@@ -378,7 +410,7 @@ app.get('/tokengraph', async (req, res) => {
     try {
         const tokenId = cachedTokenIds.find(token => token.symbol === symbol.toLowerCase())?.id;
         if (!tokenId) {
-            return res.status(404).json({ error: 'Токен не знайден' });
+            return res.status(404).json({ error: "token not found" });
         }
 
         const pricesArray = await cacheMiddleware(`prices_${tokenId}`, async () => {
@@ -388,7 +420,15 @@ app.get('/tokengraph', async (req, res) => {
                     days: 30,
                 },
             });
-            return response.data.prices;
+            const prices = response.data.prices;
+            const dailyPricesMap = {};
+
+            for (const [timestamp, price] of prices) {
+                const date = new Date(timestamp).toISOString().split('T')[0];
+                dailyPricesMap[date] = [timestamp, price];
+            }
+
+            return Object.values(dailyPricesMap);
         });
 
         res.json(pricesArray);
