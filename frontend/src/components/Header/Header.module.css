@@ -1,0 +1,154 @@
+@import url("https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Smooch+Sans:wght@100..900&display=swap");
+
+:root {
+  --basic-white: brightness(0) saturate(100%) invert(100%) sepia(0%)
+    saturate(7500%) hue-rotate(32deg) brightness(104%) contrast(108%)
+    drop-shadow(1px 1px 7px rgb(255, 192, 203));
+}
+
+body {
+  margin: 0px;
+  padding: 0px;
+}
+
+/* Container */
+
+.container {
+  width: 100%;
+  max-width: 1360px;
+
+  margin: 0 auto;
+
+  padding: 0px;
+}
+
+/* Header */
+
+.header {
+  height: 160px;
+
+  border-bottom: 1px white solid;
+  box-shadow: 0px -1px 10px pink;
+}
+
+.header__inner {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: space-between;
+}
+
+/* Header Left*/
+
+.header__left {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  text-align: center;
+
+  padding: 0 25px;
+}
+
+.header_logo__img {
+  width: 160px;
+  height: 160px;
+}
+
+.header_logo__title {
+  font-family: "Bebas Neue", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+  font-size: 48px;
+
+  color: white;
+  text-shadow: 0px 0px 5px pink, 0px 0px 5px pink, 0px 0px 20px pink,
+    0px 0px 35px pink;
+}
+.header__balance {
+  font-family: "Smooch Sans", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+  font-size: 28px;
+  line-height: 1;
+  color: white;
+
+  text-shadow: 0px 0px 5px pink, 0px 0px 5px pink, 0px 0px 20px pink,
+    0px 0px 35px pink;
+
+  margin-left: 20px;
+}
+
+/* Header Center */
+
+.header__center {
+  display: flex;
+  align-items: center;
+
+  height: 155px;
+
+  cursor: pointer;
+}
+
+.header__social {
+  width: 33px;
+  height: 33px;
+
+  filter: var(--basic-white);
+  margin: 0 10px;
+}
+
+.header__social:nth-child(1) {
+  width: 40px;
+  height: 38px;
+}
+
+/* Header Right*/
+
+.header__right {
+  width: 650px;
+  height: 155px;
+
+  display: flex;
+  align-items: center;
+  justify-content: right;
+
+  margin-right: 35px;
+}
+
+.header_right__current_address {
+  font-family: "Smooch Sans", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+  font-size: 28px;
+  line-height: 1;
+  color: white;
+
+  text-shadow: 0px 0px 5px pink, 0px 0px 5px pink, 0px 0px 20px pink,
+    0px 0px 35px pink;
+
+  margin-right: 90px;
+}
+
+.header__notifications {
+  margin-top: 10px;
+  margin-right: 20px;
+}
+
+.header_notifications__btn {
+  background: none;
+  border: none;
+}
+.header_notifications__btn img {
+  width: 33px;
+  height: 33px;
+
+  filter: var(--basic-white);
+}
+.user__avatar {
+  width: 50px;
+  height: 50px;
+
+  border-radius: 50%;
+}
