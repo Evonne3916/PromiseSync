@@ -34,7 +34,7 @@ app.use(cors({
             callback(new Error('Not allowed by CORS'));
         }
     },
-    credentials: true // если надо
+    credentials: true
 }));
 
 
@@ -53,7 +53,7 @@ async function cacheMiddleware(key, fetchFunction) {
     return data;
 }
 
-async function updateTokenIdsCache() {
+async function updateTokenIdsCache(retryCount = 0) {
     try {
         const data = await cacheMiddleware('tokenIds', async () => {
             const response = await axios.get('https://api.coingecko.com/api/v3/coins/list');
@@ -61,25 +61,40 @@ async function updateTokenIdsCache() {
         });
         cachedTokenIds = data;
         tokenIdsLastUpdated = Date.now();
-        console.log('Список tokenIds оновлено');
+        console.log('Token IDs list updated');
     } catch (error) {
-        console.error('Помилка оновлення tokenIds:', error.message);
+        console.error('Error updating token IDs:', error.message);
+        if (retryCount < 3) {
+            console.log(`Retrying to update token IDs (attempt ${retryCount + 1}/3)`);
+            setTimeout(() => updateTokenIdsCache(retryCount + 1), 30 * 60 * 1000);
+        }
     }
 }
+
 
 updateTokenIdsCache();
 
 setInterval(updateTokenIdsCache, 24 * 60 * 60 * 1000);
 
+app.get('/', (req, res) => {
+    res.json({ routes: [
+        '/checkAccount?address=YOUR_SOL_ADDRESS',
+        '/history?address=YOUR_SOL_ADDRESS',
+        '/SolBalanceGraph?address=YOUR_SOL_ADDRESS',
+        '/tokens?address=YOUR_SOL_ADDRESS',
+        '/tokengraph?symbol=TOKEN_SYMBOL'
+    ] });
+});
+
 app.get('/checkAccount', (req, res) => {
     const address = req.query.address;
 
     if (!address || !/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(address)) {
-        return res.status(400).json({ error: 'Неправильна адресса' });
+        return res.status(400).json({ error: 'Invalid address' });
     }
 
     if (address.length > 50) {
-        return res.status(400).json({ error: 'Адреса дуже довга' });
+        return res.status(400).json({ error: 'Address is too long' });
     }
 
     (async () => {
@@ -136,8 +151,8 @@ app.get('/checkAccount', (req, res) => {
 
             res.json(response);
         } catch (error) {
-            console.error('Помилка при отриманні данних для аккаунта:', error);
-            res.status(500).json({ error: 'Помилка при отриманні данних для аккаунта' });
+            console.error('Error getting account data:', error);
+            res.status(500).json({ error: 'Error getting account data' });
         }
     })();
 })
@@ -173,10 +188,10 @@ async function getTokenAccounts(ownerPublicKey) {
                 const metadataJson = await metadataResponse.json();
                 image = metadataJson.image || null;
             } catch (error) {
-                console.error(`Помилка завантаження metadata для ${mintAddress}:`, error.message);
+                console.error(`Error loading metadata for ${mintAddress}:`, error.message);
             }
 
-            const name = metadata?.name || 'Невідомий токен';
+            const name = metadata?.name || 'Unknown token';
             const symbol = metadata?.symbol || '???';
 
             return {
@@ -193,7 +208,7 @@ async function getTokenAccounts(ownerPublicKey) {
         return Promise.all(tokens).then((resolvedTokens) => resolvedTokens.sort((a, b) => b.amount - a.amount));
 
     } catch (error) {
-        console.error('Помилка отримання токенів:', error);
+        console.error('Error getting tokens:', error);
         return [];
     }
 }
@@ -202,11 +217,11 @@ app.get('/history', async (req, res) => {
     const address = req.query.address;
 
     if (!address || !/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(address)) {
-        return res.status(400).json({ error: 'Неправильна адресса' });
+        return res.status(400).json({ error: 'invalid addres' });
     }
 
     if (address.length > 50) {
-        return res.status(400).json({ error: 'Адреса дуже довга' });
+        return res.status(400).json({ error: 'Address is too long' });
     }
 
     try {
@@ -277,7 +292,7 @@ app.get('/history', async (req, res) => {
 
         res.json(history);
     } catch (err) {
-        console.error('Ошибка при получении истории:', err);
+        console.error('Error getting history:', err);
         res.status(500).send('Internal Server Error');
     }
 });
@@ -303,7 +318,7 @@ async function getSolPricesLast30Days() {
 
             return prices;
         } catch (error) {
-            console.error('Помилка отримання ціни на 30 днів:', error.message);
+            console.error('Error getting SOL price for 30 days:', error.message);
             return {};
         }
     });
@@ -313,11 +328,11 @@ app.get('/tokens', async (req, res) => {
     const address = req.query.address;
 
     if (!address || !/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(address)) {
-        return res.status(400).json({ error: 'Неправильна адресса' });
+        return res.status(400).json({ error: 'Invalid address' });
     }
 
     if (address.length > 50) {
-        return res.status(400).json({ error: 'Адреса дуже довга' });
+        return res.status(400).json({ error: 'Address is too long' });
     }
 
     try {
@@ -349,7 +364,7 @@ app.get('/tokens', async (req, res) => {
                 });
                 for (const symbol of tokensToFetch) {
                     const priceData = response.data[symbol] || {};
-                    cache.set(`tokenPrice_${symbol}`, priceData, 3600); // 1 час
+                    cache.set(`tokenPrice_${symbol}`, priceData, 3600); // 1 hour
                     tokenPrices[symbol] = priceData;
                 }
             }
@@ -390,8 +405,8 @@ app.get('/tokens', async (req, res) => {
         });
         res.json(tokens);
     } catch (error) {
-        console.error('Помилка при отриманні токенів:', error);
-        res.status(500).json({ error: 'Помилка при отриманні токенів' });
+        console.error('Error getting tokens:', error);
+        res.status(500).json({ error: 'Error getting tokens' });
     }
 });
 
@@ -400,17 +415,17 @@ let cachedTokenIds = [];
 app.get('/tokengraph', async (req, res) => {
     const symbol = req.query.symbol;
     if (!symbol) {
-        return res.status(400).json({ error: 'Потрібно вказати symbol токена' });
+        return res.status(400).json({ error: 'Token symbol is required' });
     }
 
     if (symbol.length > 50) {
-        return res.status(400).json({ error: 'Назва дуже велика' });
+        return res.status(400).json({ error: 'Token name is too long' });
     }
 
     try {
         const tokenId = cachedTokenIds.find(token => token.symbol === symbol.toLowerCase())?.id;
         if (!tokenId) {
-            return res.status(404).json({ error: "token not found" });
+            return res.status(404).json({ error: "Token not found" });
         }
 
         const pricesArray = await cacheMiddleware(`prices_${tokenId}`, async () => {
@@ -433,8 +448,8 @@ app.get('/tokengraph', async (req, res) => {
 
         res.json(pricesArray);
     } catch (error) {
-        console.error('Помилка при отриманні данних токена:', error.message);
-        return res.status(500).json({ error: 'Помилка при отриманні данних токена' });
+        console.error('Error getting token data:', error.message);
+        return res.status(500).json({ error: 'Error getting token data' });
     }
 });
 
