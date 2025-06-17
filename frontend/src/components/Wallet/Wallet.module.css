@@ -1,0 +1,162 @@
+@import url("https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Smooch+Sans:wght@100..900&display=swap");
+
+body {
+  margin: 0px;
+  padding: 0px;
+}
+
+/* Container */
+
+.container {
+  width: 100%;
+  max-width: 1400px;
+
+  margin: 0 auto;
+
+  padding: 0px;
+}
+
+.wallet {
+  margin-top: 80px;
+  margin-bottom: 80px;
+}
+
+.wallet_inner {
+  position: relative;
+
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+}
+
+/* Wallet-Left*/
+
+.wallet_left {
+  width: 44%;
+
+  border-right: 2px rgb(255, 255, 255) solid;
+  border-radius: 2px;
+}
+
+/* Wallet-Right*/
+
+.wallet_right {
+  width: 52%;
+  height: 1150px;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.preloader__wrapper {
+  width: 600px;
+}
+.wallet_right__title {
+  font-family: "Smooch Sans", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+  font-size: 36px;
+  line-height: 1;
+
+  color: white;
+
+  text-align: center;
+  margin-bottom: 25px;
+}
+.wallet_right__line_graph {
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+
+  height: 480px;
+
+  border: 2px white solid;
+  border-radius: 25px;
+
+  padding-top: 35px;
+  padding-bottom: 25px;
+}
+.wallet_right__footer {
+  width: 100%;
+
+  display: flex;
+  justify-content: right;
+}
+/* .wallet_right_show_more__btn {
+  width: 210px;
+
+  font-family: "Montserrat", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+  font-size: 18px;
+  color: white;
+  text-decoration: none;
+
+  background: none;
+  border: none;
+
+  margin-top: 20px;
+  padding-bottom: 5px;
+
+  cursor: pointer;
+  transition: text-shadow 0.2s linear;
+}
+.wallet_right_show_more__btn:hover {
+  text-shadow: 0px 0px 9px rgb(255, 192, 203);
+} */
+.wallet_right__sub_graphs {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+
+  margin-top: 60px;
+}
+.wallet_right__doughnut_graph {
+  width: 298px;
+  height: 370px;
+  border: 2px white solid;
+  border-radius: 25px;
+
+  padding: 30px;
+}
+.wallet_right_doughnut_graph__title {
+  font-family: "Smooch Sans", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+  font-size: 36px;
+  line-height: 1;
+
+  color: white;
+
+  text-align: center;
+  margin-top: 35px;
+}
+.wallet_right__horizontalbar_graph {
+  width: 300px;
+  height: 335px;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  border: 2px white solid;
+  border-radius: 25px;
+
+  padding: 15px;
+}
+.wallet_right_horizontalbar_graph__title {
+  font-family: "Smooch Sans", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+  font-size: 36px;
+  line-height: 1;
+
+  color: white;
+
+  margin-bottom: 40px;
+}

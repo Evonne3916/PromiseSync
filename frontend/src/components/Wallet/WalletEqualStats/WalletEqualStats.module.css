@@ -1,0 +1,61 @@
+@import url("https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Smooch+Sans:wght@100..900&display=swap");
+
+:root {
+  --basic-white: brightness(0) saturate(100%) invert(100%) sepia(0%)
+    saturate(7500%) hue-rotate(32deg) brightness(104%) contrast(108%)
+    drop-shadow(1px 1px 7px rgb(255, 192, 203));
+}
+
+/* Container */
+
+.container {
+  width: 100%;
+  max-width: 1200px;
+
+  margin: 0 auto;
+
+  padding: 0 15px;
+}
+
+/* WalletEqualStats */
+
+.wallet_equal_stats {
+  margin-top: 20px;
+}
+.wallet_equal_stats__inner {
+  display: flex;
+
+  margin-left: 25px;
+}
+.wallet_equal_stats__main {
+  width: 100px;
+}
+.wallet_equal_stats_main__img {
+  width: 50px;
+  filter: var(--basic-white);
+}
+.wallet_equal_stats__wrapper {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+.wallet_equal_stats__title {
+  width: 100%;
+
+  font-family: "Smooch Sans", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+  font-size: 55px;
+  line-height: 1;
+  color: white;
+
+  text-align: center;
+  margin-top: 25px;
+  margin-bottom: 35px;
+}
+.wallet_equal_stats__graph {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}

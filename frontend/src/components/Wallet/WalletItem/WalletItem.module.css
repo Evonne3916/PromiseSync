@@ -1,0 +1,150 @@
+@import url("https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Smooch+Sans:wght@100..900&display=swap");
+
+:root {
+  --basic-white: brightness(0) saturate(100%) invert(100%) sepia(0%)
+    saturate(7500%) hue-rotate(32deg) brightness(104%) contrast(108%)
+    drop-shadow(1px 1px 7px rgb(255, 192, 203));
+}
+
+body {
+  margin: 0px;
+  padding: 0px;
+}
+
+/* Container */
+
+.container {
+  width: 100%;
+  max-width: 1400px;
+
+  margin: 0 auto;
+
+  padding: 0px;
+}
+
+/* Wallet-Item*/
+
+.walletItem {
+  max-width: 550px;
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+
+  color: white;
+  margin: 55px 0;
+}
+.walletItem_left {
+  padding: 0;
+  margin-right: 35px;
+}
+/* .walletItem_token_img {
+} */
+.walletItem_token_img img {
+  width: 100px;
+  height: 100px;
+
+  border-radius: 50%;
+}
+.walletItem_token_img svg {
+  width: 100px;
+  height: 100px;
+
+  filter: var(--basic-white);
+
+  border-radius: 50%;
+}
+.walletItem_right {
+  max-width: 400px;
+  width: 100%;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+/* .walletItem_info {
+} */
+.walletItem_name {
+  font-family: "Smooch Sans", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+  font-size: 30px;
+  line-height: 1;
+}
+.walletItem_symbol {
+  display: flex;
+  align-items: center;
+
+  font-family: "Bebas Neue", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+  font-size: 23px;
+
+  margin-bottom: 4px;
+}
+.walletItem_priceChange {
+  font-family: "Montserrat", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+  font-size: 16px;
+}
+.walletItem_priceChange.raise {
+  color: lime;
+}
+.walletItem_priceChange.falls {
+  color: red;
+}
+.walletItem_price {
+  display: flex;
+  flex-direction: column;
+  justify-content: right;
+  text-align: right;
+
+  font-family: "Montserrat", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+}
+.walletItem_amount {
+  max-width: 140px;
+  font-size: 18px;
+
+  word-wrap: break-word;
+
+  margin-bottom: 5px;
+}
+.walletItem_value {
+  font-size: 16px;
+}
+.walletItem_buttons {
+  display: flex;
+  justify-content: right;
+  width: 100%;
+
+  margin-top: 10px;
+}
+.walletItem_btn {
+  display: flex;
+  text-align: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+
+  border: none;
+  border-radius: 50%;
+  background-color: white;
+
+  align-items: center;
+  cursor: pointer;
+
+  transition: box-shadow 0.2s linear;
+}
+.walletItem_btn:hover {
+  box-shadow: 0px 0px 20px rgb(255, 192, 203);
+}
+.walletItem_btn img {
+  width: 20px;
+  height: 20px;
+}
