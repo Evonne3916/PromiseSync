@@ -1,6 +1,7 @@
 const express = require('express')
 const app = express()
 const port = 3001
+require('dotenv').config({ path: __dirname + '/.env' });
 const solanaWeb3 = require("@solana/web3.js");
 const { PublicKey } = solanaWeb3;
 const { TOKEN_PROGRAM_ID } = require('@solana/spl-token');
@@ -9,13 +10,13 @@ const { Metaplex } = require('@metaplex-foundation/js');
 const fetch = require('node-fetch');
 const NodeCache = require('node-cache');
 const cors = require('cors');
-const version = 'mainnet-beta'
+
 
 
 app.use(express.json());
 
 const connection = new solanaWeb3.Connection(
-    solanaWeb3.clusterApiUrl(version),
+    process.env.SOLANA_RPC_URL,
     'confirmed'
 );
 
@@ -82,7 +83,8 @@ app.get('/', (req, res) => {
         '/history?address=YOUR_SOL_ADDRESS',
         '/SolBalanceGraph?address=YOUR_SOL_ADDRESS',
         '/tokens?address=YOUR_SOL_ADDRESS',
-        '/tokengraph?symbol=TOKEN_SYMBOL'
+        '/tokengraph?symbol=TOKEN_SYMBOL',
+        '/accountnft?address=YOUR_SOL_ADDRESS'
     ] });
 });
 
@@ -324,6 +326,33 @@ async function getSolPricesLast30Days() {
     });
 }
 
+async function getNftsByOwner(publicKey) {
+    try {
+        const nfts = await metaplex.nfts().findAllByOwner({ owner: publicKey });
+        return await Promise.all(nfts.map(async (nft) => {
+            let image = null;
+            try {
+                const metadataResponse = await fetch(nft.uri);
+                const metadataJson = await metadataResponse.json();
+                image = metadataJson.image || null;
+            } catch (error) {
+                console.error(`Error loading NFT metadata for ${nft.mintAddress.toBase58()}:`, error.message);
+            }
+            return {
+                mint: nft.mintAddress.toBase58(),
+                name: nft.name,
+                symbol: nft.symbol,
+                image,
+                collection: nft.collection?.key?.toBase58() || null,
+                type: 'nft',
+            };
+        }));
+    } catch (error) {
+        console.error('Error getting NFTs:', error);
+        return [];
+    }
+}
+
 app.get('/tokens', async (req, res) => {
     const address = req.query.address;
 
@@ -338,75 +367,81 @@ app.get('/tokens', async (req, res) => {
     try {
         const publicKey = new PublicKey(address);
 
-        const tokens = await cacheMiddleware(`tokens_${address}`, async () => {
-            const tokenAccounts = await getTokenAccounts(publicKey);
-            const tokenSymbolsArr = tokenAccounts.map(token => token.symbol.toLowerCase());
+        const [tokens, nfts] = await Promise.all([
+            cacheMiddleware(`tokens_${address}`, async () => {
+                const tokenAccounts = await getTokenAccounts(publicKey);
+                const tokenSymbolsArr = tokenAccounts.map(token => token.symbol.toLowerCase());
 
-            const tokenPrices = {};
-            const tokensToFetch = [];
-            for (const symbol of tokenSymbolsArr) {
-                const cached = cache.get(`tokenPrice_${symbol}`);
-                if (cached) {
-                    tokenPrices[symbol] = cached;
-                } else {
-                    tokensToFetch.push(symbol);
-                }
-            }
-
-            if (tokensToFetch.length > 0) {
-                const response = await axios.get('https://api.coingecko.com/api/v3/simple/price', {
-                    params: {
-                        ids: tokensToFetch.join(','),
-                        vs_currencies: 'usd',
-                        include_24hr_change: true,
-                    },
-                    timeout: 10000,
-                });
-                for (const symbol of tokensToFetch) {
-                    const priceData = response.data[symbol] || {};
-                    cache.set(`tokenPrice_${symbol}`, priceData, 3600); // 1 hour
-                    tokenPrices[symbol] = priceData;
-                }
-            }
-
-            return tokenAccounts.map(token => {
-                const priceData = tokenPrices[token.symbol.toLowerCase()] || {};
-                const price = priceData.usd ?? null;
-                const priceChange1h = priceData.usd_24h_change ?? null;
-                const image = token.image || null;
-
-                let totalValueUSD = null;
-                if (price !== null) {
-                    const value = Number(token.amount) * Number(price);
-                    totalValueUSD = value < 0.001 && value > 0 ? "~0" : Number(value.toFixed(3));
-                }
-
-                return {
-                    ...token,
-                    priceUSD: price,
-                    priceChange1h: priceChange1h !== null ? Number(priceChange1h.toFixed(2)) : null,
-                    totalValueUSD: totalValueUSD,
-                    image: image || null,
-                };
-            })
-                .filter(token => token.priceUSD !== null)
-                .sort((a, b) => {
-                    const aValue = a.totalValueUSD === "~0" ? 0 : Number(a.totalValueUSD);
-                    const bValue = b.totalValueUSD === "~0" ? 0 : Number(b.totalValueUSD);
-
-                    if (Math.abs(bValue - aValue) < 0.000001) {
-                        return b.amount - a.amount;
+                const tokenPrices = {};
+                const tokensToFetch = [];
+                for (const symbol of tokenSymbolsArr) {
+                    const cached = cache.get(`tokenPrice_${symbol}`);
+                    if (cached) {
+                        tokenPrices[symbol] = cached;
+                    } else {
+                        tokensToFetch.push(symbol);
                     }
-                    return bValue - aValue;
+                }
+
+                if (tokensToFetch.length > 0) {
+                    const response = await axios.get('https://api.coingecko.com/api/v3/simple/price', {
+                        params: {
+                            ids: tokensToFetch.join(','),
+                            vs_currencies: 'usd',
+                            include_24hr_change: true,
+                        },
+                        timeout: 10000,
+                    });
+                    for (const symbol of tokensToFetch) {
+                        const priceData = response.data[symbol] || {};
+                        cache.set(`tokenPrice_${symbol}`, priceData, 3600); // 1 hour
+                        tokenPrices[symbol] = priceData;
+                    }
+                }
+
+                return tokenAccounts.map(token => {
+                    const priceData = tokenPrices[token.symbol.toLowerCase()] || {};
+                    const price = priceData.usd ?? null;
+                    const priceChange1h = priceData.usd_24h_change ?? null;
+                    const image = token.image || null;
+
+                    let totalValueUSD = null;
+                    if (price !== null) {
+                        const value = Number(token.amount) * Number(price);
+                        totalValueUSD = value < 0.001 && value > 0 ? "~0" : Number(value.toFixed(3));
+                    }
+
+                    return {
+                        ...token,
+                        priceUSD: price,
+                        priceChange1h: priceChange1h !== null ? Number(priceChange1h.toFixed(2)) : null,
+                        totalValueUSD: totalValueUSD,
+                        image: image || null,
+                        type: 'token',
+                    };
                 })
-                .map(token => {
-                    return token;
-                });
-        });
-        res.json(tokens);
+                    .filter(token => token.priceUSD !== null)
+                    .sort((a, b) => {
+                        const aValue = a.totalValueUSD === "~0" ? 0 : Number(a.totalValueUSD);
+                        const bValue = b.totalValueUSD === "~0" ? 0 : Number(b.totalValueUSD);
+
+                        if (Math.abs(bValue - aValue) < 0.000001) {
+                            return b.amount - a.amount;
+                        }
+                        return bValue - aValue;
+                    })
+                    .map(token => {
+                        return token;
+                    });
+            }),
+            getNftsByOwner(publicKey)
+        ]);
+
+        const allAssets = [...tokens, ...nfts];
+        res.json(allAssets);
     } catch (error) {
-        console.error('Error getting tokens:', error);
-        res.status(500).json({ error: 'Error getting tokens' });
+        console.error('Error getting tokens and NFTs:', error);
+        res.status(500).json({ error: 'Error getting tokens and NFTs' });
     }
 });
 
@@ -450,6 +485,44 @@ app.get('/tokengraph', async (req, res) => {
     } catch (error) {
         console.error('Error getting token data:', error.message);
         return res.status(500).json({ error: 'Error getting token data' });
+    }
+});
+
+app.get('/accountnft', async (req, res) => {
+    const address = req.query.address;
+
+    if (!address || !/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(address)) {
+        return res.status(400).json({ error: 'Invalid address' });
+    }
+
+    if (address.length > 50) {
+        return res.status(400).json({ error: 'Address is too long' });
+    }
+
+    try {
+        const publicKey = new PublicKey(address);
+        const nfts = await metaplex.nfts().findAllByOwner({ owner: publicKey });
+        const nftList = await Promise.all(nfts.map(async (nft) => {
+            let image = null;
+            try {
+                const metadataResponse = await fetch(nft.uri);
+                const metadataJson = await metadataResponse.json();
+                image = metadataJson.image || null;
+            } catch (error) {
+                console.error(`Error loading NFT metadata for ${nft.mintAddress.toBase58()}:`, error.message);
+            }
+            return {
+                mint: nft.mintAddress.toBase58(),
+                name: nft.name,
+                symbol: nft.symbol,
+                image,
+                collection: nft.collection?.key?.toBase58() || null,
+            };
+        }));
+        res.json(nftList);
+    } catch (error) {
+        console.error('Error getting NFTs:', error);
+        res.status(500).json({ error: 'Error getting NFTs' });
     }
 });
 
