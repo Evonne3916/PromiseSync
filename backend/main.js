@@ -10,7 +10,7 @@ const { Metaplex } = require('@metaplex-foundation/js');
 const fetch = require('node-fetch');
 const NodeCache = require('node-cache');
 const cors = require('cors');
-
+const { makeRequestWithProxy, proxyManager, printProxyStatistics } = require('./proxy');
 
 
 app.use(express.json());
@@ -42,6 +42,9 @@ app.use(cors({
 const metaplex = Metaplex.make(connection);
 
 const cache = new NodeCache({ stdTTL: 3600, checkperiod: 600 });
+
+const PROXY_BATCH_SIZE = 15;
+let retryTokenQueue = [];
 
 async function cacheMiddleware(key, fetchFunction) {
     const cachedData = cache.get(key);
@@ -84,6 +87,8 @@ app.get('/', (req, res) => {
         '/SolBalanceGraph?address=YOUR_SOL_ADDRESS',
         '/tokens?address=YOUR_SOL_ADDRESS',
         '/tokengraph?symbol=TOKEN_SYMBOL',
+        '/hourlyprices?symbol=TOKEN_SYMBOL',
+        '/proxy-stats - Статистика прокси-серверов',
         '/accountnft?address=YOUR_SOL_ADDRESS'
     ] });
 });
@@ -447,6 +452,169 @@ app.get('/tokens', async (req, res) => {
 
 let cachedTokenIds = [];
 
+async function promisePool(tasks, poolLimit) {
+    const results = [];
+    const executing = [];
+    for (const task of tasks) {
+        const p = Promise.resolve().then(() => task());
+        results.push(p);
+        if (poolLimit <= tasks.length) {
+            const e = p.then(() => executing.splice(executing.indexOf(e), 1));
+            executing.push(e);
+            if (executing.length >= poolLimit) {
+                await Promise.race(executing);
+            }
+        }
+    }
+    return Promise.all(results);
+}
+
+async function updateTokenPricesWithProxy() {
+    if (!Array.isArray(cachedTokenIds) || cachedTokenIds.length === 0) {
+        console.log('[TokenPrices] Список токенов пуст, пропускаем обновление');
+        return;
+    }
+
+    console.log(`[TokenPrices] Начинаем обновление текущих цен через прокси для ${cachedTokenIds.length} токенов`);
+    const currentTime = Date.now();
+    const currentHour = new Date(currentTime).toISOString().slice(0, 13) + ':00:00.000Z';
+    let processed = 0;
+    
+    while (processed < cachedTokenIds.length) {
+        let tokenList = [];
+        
+        if (retryTokenQueue.length > 0) {
+            const retryBatch = retryTokenQueue.splice(0, PROXY_BATCH_SIZE);
+            const remainingSlots = PROXY_BATCH_SIZE - retryBatch.length;
+            if (remainingSlots > 0) {
+                const newTokens = cachedTokenIds.slice(processed, processed + remainingSlots);
+                tokenList = [...retryBatch, ...newTokens];
+            } else {
+                tokenList = retryBatch;
+            }
+        } else {
+            tokenList = cachedTokenIds.slice(processed, processed + PROXY_BATCH_SIZE);
+        }
+
+        if (tokenList.length === 0) break;
+
+        const tokenIds = tokenList.map(token => token.id).join(',');
+        
+        console.log(`[TokenPrices] Обрабатываем батч из ${tokenList.length} токенов`);
+
+        try {
+            console.log(`[TokenPrices] Запрашиваем цены для: ${tokenIds.substring(0, 100)}${tokenIds.length > 100 ? '...' : ''}`);
+            
+            const response = await makeRequestWithProxy(
+                'https://api.coingecko.com/api/v3/simple/price',
+                {
+                    ids: tokenIds,
+                    vs_currencies: 'usd',
+                    include_24hr_change: true,
+                    include_last_updated_at: true
+                },
+                3
+            );
+
+            const pricesData = response.data;
+            let updatedCount = 0;
+            
+            for (const token of tokenList) {
+                const tokenId = token.id;
+                const priceData = pricesData[tokenId];
+                
+                if (priceData && priceData.usd !== undefined) {
+                    const hourlyKey = `hourly_${tokenId}`;
+                    let hourlyData = cache.get(hourlyKey) || [];
+                    
+                    const newDataPoint = {
+                        timestamp: currentTime,
+                        hour: currentHour,
+                        price: priceData.usd,
+                        change_24h: priceData.usd_24h_change || null,
+                        last_updated: priceData.last_updated_at || currentTime
+                    };
+                    
+                    hourlyData.push(newDataPoint);
+                    
+                    const dayAgo = currentTime - (24 * 60 * 60 * 1000);
+                    hourlyData = hourlyData.filter(point => point.timestamp > dayAgo);
+                    
+                    const uniqueHourlyData = [];
+                    const hoursSeen = new Set();
+                    
+                    for (let i = hourlyData.length - 1; i >= 0; i--) {
+                        const point = hourlyData[i];
+                        if (!hoursSeen.has(point.hour)) {
+                            uniqueHourlyData.unshift(point);
+                            hoursSeen.add(point.hour);
+                        }
+                    }
+                    
+                    cache.set(hourlyKey, uniqueHourlyData, 25 * 60 * 60);
+                    updatedCount++;
+                    
+                    if (updatedCount <= 3) {
+                        console.log(`[TokenPrices] Цена обновлена для ${tokenId}: $${priceData.usd} (${uniqueHourlyData.length} точек данных)`);
+                    }
+                } else {
+                    console.warn(`[TokenPrices] Не удалось получить цену для ${tokenId}`);
+                }
+            }
+            
+            console.log(`[TokenPrices] Батч завершен: ${updatedCount}/${tokenList.length} токенов обновлено`);
+
+        } catch (err) {
+            console.error(`[TokenPrices] Критическая ошибка для батча: ${err.message}`);
+            
+            if (err.message.includes('Все прокси недоступны') || 
+                err.message.includes('Не удалось выполнить запрос после')) {
+                console.warn(`[TokenPrices] Добавляем ${tokenList.length} токенов в очередь повтора`);
+                retryTokenQueue.push(...tokenList);
+            }
+        }
+
+        if (!retryTokenQueue.some(retryToken => tokenList.some(token => token.id === retryToken.id))) {
+            processed += tokenList.length;
+        }
+
+        if (processed < cachedTokenIds.length || retryTokenQueue.length > 0) {
+            const waitTime = proxyManager.getWaitTime();
+            if (waitTime > 0) {
+                console.log(`[TokenPrices] Ожидание ${Math.ceil(waitTime / 1000)} секунд до освобождения прокси...`);
+                await new Promise(resolve => setTimeout(resolve, waitTime + 1000));
+            } else {
+                await new Promise(resolve => setTimeout(resolve, 2000));
+            }
+        }
+    }
+
+    console.log(`[TokenPrices] Обновление завершено. Обработано: ${processed}, В очереди повтора: ${retryTokenQueue.length}`);
+    
+    setTimeout(updateTokenPricesWithProxy, 60 * 60 * 1000);
+}
+
+function startTokenPriceUpdatesWithProxy() {
+    console.log('[TokenPrices] Запуск системы обновления цен токенов через прокси');
+    
+    setTimeout(() => {
+        console.log('[TokenPrices] Статус прокси при запуске:');
+        printProxyStatistics();
+    }, 5000);
+    
+    const checkAndStart = () => {
+        if (cachedTokenIds && cachedTokenIds.length > 0) {
+            console.log(`[TokenPrices] Найдено ${cachedTokenIds.length} токенов для мониторинга`);
+            updateTokenPricesWithProxy();
+        } else {
+            console.log('[TokenPrices] Ожидание загрузки списка токенов...');
+            setTimeout(checkAndStart, 10000);
+        }
+    };
+    
+    setTimeout(checkAndStart, 30000);
+}
+
 app.get('/tokengraph', async (req, res) => {
     const symbol = req.query.symbol;
     if (!symbol) {
@@ -485,6 +653,73 @@ app.get('/tokengraph', async (req, res) => {
     } catch (error) {
         console.error('Error getting token data:', error.message);
         return res.status(500).json({ error: 'Error getting token data' });
+    }
+});
+
+app.get('/hourlyprices', async (req, res) => {
+    const symbol = req.query.symbol;
+    if (!symbol) {
+        return res.status(400).json({ error: 'Token symbol is required' });
+    }
+
+    if (symbol.length > 50) {
+        return res.status(400).json({ error: 'Token name is too long' });
+    }
+
+    try {
+        const tokenId = cachedTokenIds.find(token => token.symbol === symbol.toLowerCase())?.id;
+        if (!tokenId) {
+            return res.status(404).json({ error: "Token not found" });
+        }
+        const hourlyKey = `hourly_${tokenId}`;
+        const hourlyData = cache.get(hourlyKey) || [];
+
+        if (hourlyData.length === 0) {
+            return res.status(404).json({ error: "No hourly data available for this token yet" });
+        }
+
+        const sortedData = hourlyData.sort((a, b) => a.timestamp - b.timestamp);
+
+        const formattedData = sortedData.map(point => ({
+            timestamp: point.timestamp,
+            hour: point.hour,
+            price: point.price,
+            change_24h: point.change_24h,
+            last_updated: point.last_updated
+        }));
+
+        res.json({
+            symbol: symbol,
+            tokenId: tokenId,
+            dataPoints: formattedData.length,
+            data: formattedData
+        });
+    } catch (error) {
+        console.error('Error getting hourly token data:', error.message);
+        return res.status(500).json({ error: 'Error getting hourly token data' });
+    }
+});
+
+app.get('/proxy-stats', (req, res) => {
+    try {
+        const stats = proxyManager.getProxyStatistics();
+        const systemStats = {
+            totalProxies: proxyManager.proxies.length,
+            activeProxies: proxyManager.proxies.filter(p => p.isActive).length,
+            currentMonth: new Date().toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' }),
+            limitsPerProxy: {
+                perMinute: proxyManager.REQUESTS_PER_MINUTE,
+                perMonth: proxyManager.REQUESTS_PER_MONTH
+            }
+        };
+
+        res.json({
+            system: systemStats,
+            proxies: stats
+        });
+    } catch (error) {
+        console.error('Error getting proxy statistics:', error.message);
+        res.status(500).json({ error: 'Error getting proxy statistics' });
     }
 });
 
@@ -531,5 +766,6 @@ app.listen(port, (err) => {
         console.log(`${err}`);
     } else {
         console.log(`${port}`);
+        startTokenPriceUpdatesWithProxy();
     }
 });
