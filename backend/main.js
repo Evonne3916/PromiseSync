@@ -10,18 +10,14 @@ const { Metaplex } = require('@metaplex-foundation/js');
 const fetch = require('node-fetch');
 const NodeCache = require('node-cache');
 const cors = require('cors');
-const Moralis = require('moralis').default;
+const { Mobula } = require('mobula-api-sdk');
 
 
 
 app.use(express.json());
 
-// Инициализация Moralis
-if (!Moralis.Core.isStarted) {
-    Moralis.start({
-        apiKey: process.env.MORALIS_API_KEY
-    });
-}
+// Инициализация Mobula
+const mobula = new Mobula(process.env.MOBULA_API_KEY);
 
 const connection = new solanaWeb3.Connection(
     process.env.SOLANA_RPC_URL,
@@ -62,17 +58,21 @@ async function cacheMiddleware(key, fetchFunction) {
     return data;
 }
 
-// Функция для получения цены токена через Moralis
-async function getTokenPriceFromMoralis(tokenAddress) {
+// Функция для получения цены токена через Mobula
+async function getTokenPriceFromMobula(tokenAddress) {
     try {
-        const response = await Moralis.SolApi.token.getTokenPrice({
-            address: tokenAddress,
-            network: "mainnet"
+        const response = await mobula.fetchAssetMarketData({
+            asset: tokenAddress,
+            blockchain: 'Solana'
         });
-        return {
-            usd: response.raw.usdPrice,
-            usd_24h_change: response.raw.usdPriceFormatted24hPercentChange || null
-        };
+        
+        if (response && response.data) {
+            return {
+                usd: response.data.price,
+                usd_24h_change: response.data.price_change_24h || null
+            };
+        }
+        return null;
     } catch (error) {
         console.error(`Error getting price for token ${tokenAddress}:`, error.message);
         return null;
@@ -82,14 +82,19 @@ async function getTokenPriceFromMoralis(tokenAddress) {
 // Функция для получения цен нескольких токенов
 async function getMultipleTokenPrices(tokenAddresses) {
     const prices = {};
-    const promises = tokenAddresses.map(async (address) => {
-        const price = await getTokenPriceFromMoralis(address);
-        if (price) {
-            prices[address] = price;
-        }
-    });
     
-    await Promise.all(promises);
+    try {
+        // Mobula позволяет запрашивать несколько токенов одновременно
+        for (const address of tokenAddresses) {
+            const priceData = await getTokenPriceFromMobula(address);
+            if (priceData) {
+                prices[address] = priceData;
+            }
+        }
+    } catch (error) {
+        console.error('Error getting multiple token prices:', error.message);
+    }
+    
     return prices;
 }
 
@@ -137,9 +142,9 @@ app.get('/checkAccount', (req, res) => {
             }
 
             if (tokensToFetch.length > 0) {
-                const moralisPrices = await getMultipleTokenPrices(tokensToFetch);
+                const mobulaPrices = await getMultipleTokenPrices(tokensToFetch);
                 for (const address of tokensToFetch) {
-                    const priceData = moralisPrices[address] || {};
+                    const priceData = mobulaPrices[address] || {};
                     cache.set(`tokenPrice_${address}`, priceData, 3600);
                     tokenPrices[address] = priceData;
                 }
@@ -312,29 +317,40 @@ app.get('/history', async (req, res) => {
 async function getSolPricesLast30Days() {
     return await cacheMiddleware('solPricesLast30Days', async () => {
         try {
-            // SOL wrapped token address
-            const SOL_ADDRESS = 'So11111111111111111111111111111111111111112';
+            // SOL wrapped token address или можно использовать 'solana' как asset
+            const SOL_ASSET = 'solana';
             
-            // Получаем текущую цену SOL через Moralis
-            const currentPrice = await getTokenPriceFromMoralis(SOL_ADDRESS);
-            if (!currentPrice) {
-                throw new Error('Could not get current SOL price');
-            }
+            // Получаем исторические данные SOL через Mobula
+            const response = await mobula.fetchAssetMarketHistory({
+                asset: SOL_ASSET,
+                from: Math.floor((Date.now() - 30 * 24 * 60 * 60 * 1000) / 1000), // 30 дней назад
+                to: Math.floor(Date.now() / 1000), // сейчас
+                timeframe: '1d'
+            });
 
-            // Генерируем приблизительные исторические цены (имитация)
-            // В реальном приложении вы можете использовать другой источник для исторических данных
             const prices = {};
-            const today = new Date();
             
-            for (let i = 0; i < 30; i++) {
-                const date = new Date(today);
-                date.setDate(date.getDate() - i);
-                const dateKey = date.toISOString().split('T')[0];
-                
-                // Простая имитация изменения цены (в реальном проекте используйте реальные исторические данные)
-                const variation = (Math.random() - 0.5) * 0.1; // ±5% вариация
-                const price = currentPrice.usd * (1 + variation);
-                prices[dateKey] = price;
+            if (response && response.data && response.data.data) {
+                // Обрабатываем исторические данные от Mobula
+                response.data.data.forEach(entry => {
+                    const date = new Date(entry.timestamp * 1000).toISOString().split('T')[0];
+                    prices[date] = entry.price;
+                });
+            } else {
+                // Fallback: получаем текущую цену и генерируем приблизительные исторические данные
+                const currentPrice = await getTokenPriceFromMobula('So11111111111111111111111111111111111111112');
+                if (currentPrice) {
+                    const today = new Date();
+                    for (let i = 0; i < 30; i++) {
+                        const date = new Date(today);
+                        date.setDate(date.getDate() - i);
+                        const dateKey = date.toISOString().split('T')[0];
+                        
+                        const variation = (Math.random() - 0.5) * 0.1; // ±5% вариация
+                        const price = currentPrice.usd * (1 + variation);
+                        prices[dateKey] = price;
+                    }
+                }
             }
 
             return prices;
@@ -403,9 +419,9 @@ app.get('/tokens', async (req, res) => {
                 }
 
                 if (tokensToFetch.length > 0) {
-                    const moralisPrices = await getMultipleTokenPrices(tokensToFetch);
+                    const mobulaPrices = await getMultipleTokenPrices(tokensToFetch);
                     for (const address of tokensToFetch) {
-                        const priceData = moralisPrices[address] || {};
+                        const priceData = mobulaPrices[address] || {};
                         cache.set(`tokenPrice_${address}`, priceData, 3600); // 1 hour
                         tokenPrices[address] = priceData;
                     }
@@ -469,14 +485,33 @@ app.get('/tokengraph', async (req, res) => {
 
     try {
         const pricesArray = await cacheMiddleware(`prices_${address}`, async () => {
-            // Получаем текущую цену токена
-            const currentPrice = await getTokenPriceFromMoralis(address);
+            try {
+                // Пытаемся получить исторические данные через Mobula
+                const response = await mobula.fetchAssetMarketHistory({
+                    asset: address,
+                    blockchain: 'Solana',
+                    from: Math.floor((Date.now() - 30 * 24 * 60 * 60 * 1000) / 1000), // 30 дней назад
+                    to: Math.floor(Date.now() / 1000), // сейчас
+                    timeframe: '1d'
+                });
+
+                if (response && response.data && response.data.data) {
+                    // Преобразуем данные в формат [timestamp, price]
+                    return response.data.data.map(entry => [
+                        entry.timestamp * 1000, // конвертируем в миллисекунды
+                        entry.price
+                    ]);
+                }
+            } catch (error) {
+                console.log('Failed to get historical data, falling back to current price:', error.message);
+            }
+
+            // Fallback: получаем текущую цену и генерируем приблизительные исторические данные
+            const currentPrice = await getTokenPriceFromMobula(address);
             if (!currentPrice) {
                 throw new Error('Could not get token price');
             }
 
-            // Генерируем исторические данные на основе текущей цены
-            // В реальном приложении используйте реальные исторические данные
             const prices = [];
             const today = new Date();
             
@@ -485,7 +520,6 @@ app.get('/tokengraph', async (req, res) => {
                 date.setDate(date.getDate() - i);
                 const timestamp = date.getTime();
                 
-                // Простая имитация изменения цены
                 const variation = (Math.random() - 0.5) * 0.2; // ±10% вариация
                 const price = currentPrice.usd * (1 + variation);
                 

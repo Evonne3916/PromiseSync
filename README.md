@@ -1,115 +1,153 @@
-# Solance - a financial tracker for crypto assets on Solana
-# Project Development Guidelines
+# PromiseSync - Solana Wallet Analytics
 
-This document provides guidelines and instructions for developing and maintaining the Solance/PromiseSync project, a Solana blockchain wallet application.
+Веб-приложение для анализа кошельков Solana с интерактивными графиками и детальной статистикой.
 
-## Build/Configuration Instructions
+## 🚀 Обновление: Миграция на Mobula API
 
-### Prerequisites
-- Node.js (v16+ recommended)
-- npm (v7+ recommended)
+Проект был обновлен для использования **Mobula API** вместо CoinGecko/Moralis для получения криптовалютных данных.
 
-### Backend Setup
-1. Navigate to the backend directory:
-   ```
-   cd backend
-   ```
+### Преимущества Mobula API:
+- 🎯 **Специализация на Solana**: Улучшенная поддержка токенов Solana
+- 📊 **Реальные исторические данные**: Точные графики цен
+- 🚀 **Высокая производительность**: Быстрые ответы API
+- 💎 **300,000 бесплатных запросов** в месяц
 
-2. Install dependencies:
-   ```
-   npm install
-   ```
+## ⚙️ Настройка
 
-3. Start the backend server:
-   ```
-   node main.js
-   ```
+### 1. Backend Setup
 
-   The server will run on port 3001 by default.
+```bash
+cd backend
+npm install
+```
 
-### Frontend Setup
-1. Navigate to the frontend directory:
-   ```
-   cd frontend
-   ```
+### 2. Переменные окружения
 
-2. Install dependencies:
-   ```
-   npm install
-   ```
+Создайте файл `.env` в папке `backend/` на основе `.env.example`:
 
-3. Start the development server:
-   ```
-   npm start
-   ```
+```env
+# Solana RPC URL
+SOLANA_RPC_URL=https://api.mainnet-beta.solana.com
 
-   The frontend will run on port 3000 by default and will be accessible at http://localhost:3000.
+# Mobula API Key
+MOBULA_API_KEY=your_mobula_api_key_here
+```
 
-### Environment Configuration
-- The backend is configured to allow CORS from specific origins defined in the `allowedOrigins` array in `backend/main.js`.
-- The backend connects to the Solana mainnet-beta by default. To change this, modify the `version` variable in `backend/main.js`.
+### 3. Получение API ключа Mobula
 
-## Additional Development Information
+1. Зарегистрируйтесь на [Mobula Dashboard](https://admin.mobula.fi/)
+2. Создайте новый API ключ
+3. Скопируйте ключ в файл `.env`
 
-### Project Structure
-- **Backend**: Express.js server that interacts with the Solana blockchain
-    - `main.js`: Main server file with API endpoints
-    - API endpoints:
-        - `/checkAccount`: Gets account information from a Solana wallet address
-        - `/history`: Gets transaction history for a wallet
-        - `/tokens`: Gets token information for a wallet
-        - `/tokengraph`: Gets price history for a specific token
+### 4. Тестирование API
 
-- **Frontend**: React application
-    - Uses React Router for navigation
-    - Uses Redux for state management
-    - Follows a Container/Component pattern
-    - Uses CSS modules for styling
+```bash
+cd backend
+node test-mobula.js
+```
 
-### Code Style and Patterns
+### 5. Запуск сервера
 
-#### Frontend
-1. **Component Structure**:
-    - Functional components with hooks
-    - Container/Component pattern:
-        - Container components handle data and logic
-        - Presentational components handle rendering
+```bash
+cd backend
+node main.js
+```
 
-2. **Styling**:
-    - CSS Modules (imported as `s` in components)
-    - Example: `import s from "./Component.module.css"`
+### 6. Frontend Setup
 
-3. **State Management**:
-    - Redux for global state
-    - React hooks (useState, useEffect) for local state
+```bash
+cd frontend
+npm install
+npm start
+```
 
-#### Backend
-1. **API Structure**:
-    - RESTful endpoints
-    - Express.js middleware for request handling
+## 📚 API Endpoints
 
-2. **Performance Optimization**:
-    - Uses NodeCache for caching responses
-    - Implements middleware for caching common requests
+### Основные эндпоинты:
 
-3. **Error Handling**:
-    - Try/catch blocks for async operations
-    - Proper HTTP status codes for different error scenarios
+- `GET /checkAccount?address=YOUR_SOL_ADDRESS` - Информация о кошельке
+- `GET /history?address=YOUR_SOL_ADDRESS` - История балансов  
+- `GET /tokens?address=YOUR_SOL_ADDRESS` - Токены и NFT
+- `GET /tokengraph?address=TOKEN_ADDRESS` - График цены токена
+- `GET /accountnft?address=YOUR_SOL_ADDRESS` - NFT коллекция
 
-### Working with the Solana Blockchain
-- The application uses `@solana/web3.js` for interacting with the Solana blockchain
-- Token information is fetched using `@solana/spl-token` and `@metaplex-foundation/js`
-- Price data is fetched from the CoinGecko API
+### Изменения в API:
 
-### Debugging Tips
-1. **Frontend**:
-    - Use React DevTools for component inspection
-    - Use Redux DevTools for state debugging
+**Эндпоинт `/tokengraph`** теперь поддерживает:
+- Адреса токенов Solana: `/tokengraph?address=So11111111111111111111111111111111111111112`
+- Названия активов: `/tokengraph?address=solana`
 
-2. **Backend**:
-    - Check server logs for errors
-    - Use tools like Postman to test API endpoints directly
+## 🏗️ Архитектура
 
-3. **Blockchain Interactions**:
-    - Use Solana Explorer (https://explorer.solana.com/) to verify transactions and account data
-    - Test with known wallet addresses before using production data
+```
+PromiseSync/
+├── backend/          # Node.js API сервер
+│   ├── main.js       # Основной файл сервера
+│   ├── test-mobula.js # Тест Mobula API
+│   └── .env.example  # Пример переменных окружения
+├── frontend/         # React приложение
+│   ├── src/
+│   │   ├── components/
+│   │   ├── redux/
+│   │   └── api/
+└── landing/          # Лендинг страница
+```
+
+## 🔧 Технологии
+
+### Backend:
+- **Node.js** + Express
+- **Mobula API** - криптовалютные данные
+- **Solana Web3.js** - взаимодействие с блокчейном
+- **Metaplex** - NFT метаданные
+
+### Frontend:
+- **React**
+- **Redux** - управление состоянием
+- **Chart.js** - интерактивные графики
+
+## 📈 Функции
+
+- 📊 **Анализ кошелька**: Баланс, токены, NFT
+- 📈 **Интерактивные графики**: История цен и балансов
+- 🎨 **NFT галерея**: Просмотр коллекций
+- 💰 **Калькуляция стоимости**: Автоматический расчет в USD
+- ⚡ **Реальное время**: Актуальные данные
+
+## 🛠️ Разработка
+
+### Структура проекта:
+- `backend/main.js` - основной API сервер
+- `backend/MOBULA_MIGRATION.md` - документация миграции
+- `frontend/src/` - React компоненты
+- `frontend/src/redux/` - Redux store
+
+### Полезные команды:
+
+```bash
+# Установка зависимостей
+npm install
+
+# Тестирование Mobula API
+node test-mobula.js
+
+# Запуск в режиме разработки
+npm run dev
+
+# Проверка кода
+npm run lint
+```
+
+## 📝 Миграция
+
+Подробная информация о миграции с предыдущих API находится в файле `backend/MOBULA_MIGRATION.md`.
+
+## 📞 Поддержка
+
+- 📧 **Email**: support@promisesync.com
+- 💬 **Telegram**: [@MobulaPartnerBot](https://t.me/MobulaPartnerBot)
+- 📖 **Документация**: [Mobula Docs](https://docs.mobula.io/)
+
+## 📄 Лицензия
+
+MIT License - детали в файле LICENSE.
